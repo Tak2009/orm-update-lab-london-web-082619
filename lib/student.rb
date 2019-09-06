@@ -2,10 +2,11 @@ require_relative "../config/environment.rb"
 
 class Student
 
-  attr_reader :id, :name, :game
+  attr_accessor :name, :grade
+  attr_reader :id
 
   def initialize(name, grade, id = nil)
-    @nanme = name 
+    @name = name 
     @grade = grade
     @id = id
   end
@@ -27,13 +28,29 @@ class Student
     DB[:conn].execute("DROP TABLE students")
   end
 
-end
+  def save
+    if @id 
+      update
+    else
+      sql = <<-SQL
+      INSERT INTO students(name, grade)
+      VALUE(?, ?)
+      SQL
 
-def save
-  if @id 
-     update
-  else
+      DB[:conn].execute(sql, @name, @grade)
+      @id = DB[:conn].execute("SELECT last_insert_rowid() FROM students")[0][0]
+    end
+  end
+
+  def update
     sql = <<-SQL
-    INSEERT INTO students(name, grade)
-     VALUE(?,?)
+    UPDATE students
+    SET name = ?, 
+        grade = ?
+    WHERE id = ?
     SQL
+
+    DB[:conn].execute(sql, name, grade)
+  end
+
+end
